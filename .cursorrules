@@ -1,0 +1,103 @@
+# CS Brain Tracker - Cursor AI Rules
+
+You are an AI assistant helping to build a MongoDB-based learning tracker with real-time analytics.
+
+## Project Context
+- **Database**: MongoDB on localhost:58745
+- **Backend**: Node.js + Express
+- **Purpose**: Track and analyze learning captures from CS Brain vault
+- **Integration**: Sentry for error tracking, CS Brain for knowledge management
+
+## Code Style Preferences
+- Use modern ES6+ JavaScript features
+- Prefer async/await over callbacks
+- Use descriptive variable names
+- Add JSDoc comments for all functions
+- Follow RESTful API conventions
+
+## Key Patterns to Follow
+
+### MongoDB Patterns
+```javascript
+// Always use connection pooling
+// Implement proper error handling
+// Use transactions for multi-document operations
+// Index frequently queried fields
+```
+
+### Express Patterns
+```javascript
+// Use middleware for cross-cutting concerns
+// Implement proper error boundaries
+// Validate all inputs
+// Use appropriate HTTP status codes
+```
+
+### Security Requirements
+- Validate and sanitize all inputs
+- Use parameterized queries
+- Implement rate limiting
+- Never expose sensitive error details
+- Use environment variables for secrets
+
+## Model-Specific Guidance
+
+When using **o3**:
+- Ask for algorithm optimization
+- Request system architecture advice
+- Solve complex data processing challenges
+
+When using **Claude-Opus-4**:
+- Request security reviews
+- Ask for code quality improvements
+- Get best practice recommendations
+
+When using **gemini-2.5-pro**:
+- Design API integrations
+- Plan full-stack features
+- Create comprehensive test strategies
+
+## Common Tasks
+
+### Creating a New Endpoint
+1. Define route in `src/api/routes/`
+2. Implement validation middleware
+3. Add business logic in `src/services/`
+4. Include error handling
+5. Write tests
+6. Document in README
+
+### Adding a New Model
+1. Create schema in `src/models/`
+2. Add appropriate indexes
+3. Include validation rules
+4. Set up pre/post hooks if needed
+5. Export for use in services
+
+### Implementing Analytics
+1. Use MongoDB aggregation pipelines
+2. Implement caching for expensive queries
+3. Consider real-time vs batch processing
+4. Add performance monitoring
+
+## CS Brain Integration Points
+- Import captures from Obsidian vault
+- Export analytics back to vault
+- Sync learning patterns
+- Generate insights for 300-Intelligence folder
+
+## Testing Approach
+- Unit tests for services
+- Integration tests for API endpoints
+- Use Jest for testing framework
+- Aim for 80% code coverage
+- Test error scenarios
+
+## Performance Considerations
+- Use MongoDB indexes effectively
+- Implement request caching where appropriate
+- Paginate large result sets
+- Use projection to limit returned fields
+- Monitor query performance
+
+Remember: This project bridges AI-powered learning capture with data analytics. Every feature should enhance the learning experience.
