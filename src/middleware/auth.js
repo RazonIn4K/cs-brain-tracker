@@ -140,7 +140,7 @@ const checkJwt = jwtMiddleware({
   audience: AUDIENCE,
   issuer: ISSUER,
   algorithms: ["RS256"],
-}).unless({ path: ["/auth/login", "/auth/refresh"] });
+}).unless({ path: [/\/auth\/login$/, /\/auth\/refresh$/] });
 
 /**
  * Token-binding middleware. Ensures the `fp` claim inside the access token
@@ -165,4 +165,4 @@ module.exports = {
   enforceTokenBinding,
   generateTokens,
   rotateRefreshToken,
-}; 
+};

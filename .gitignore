@@ -3,3 +3,9 @@ keys/
 *.key
 *.pem
 node_modules
+
+# Environment
+.env
+.env.*
+server.log
+.vercel/
