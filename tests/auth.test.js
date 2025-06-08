@@ -64,4 +64,11 @@ describe('Auth flow', () => {
     // Could be 401 if token-binding mismatch in test env; allow 200 or 401
     expect([200, 401]).toContain(res.statusCode);
   });
+
+  it('Rejects invalid login credentials', async () => {
+    const res = await request(app)
+      .post('/api/v1/auth/login')
+      .send({ email: TEST_EMAIL, password: 'wrongpassword' });
+    expect(res.statusCode).toBe(401);
+  });
 }); 

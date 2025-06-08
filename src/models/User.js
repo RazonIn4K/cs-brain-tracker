@@ -47,7 +47,9 @@ UserSchema.methods.comparePassword = async function (candidate) {
 
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('passwordHash')) return next();
-  // If passwordHash field directly modified (rare), skip hashing.
+  // This model expects `passwordHash` to already be hashed before save.
+  // If you're saving a plaintext password, hash it **before** assigning to
+  // `passwordHash`. This hook is a no-op and merely allows other fields to save.
   next();
 });
 

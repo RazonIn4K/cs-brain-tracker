@@ -29,7 +29,6 @@ src/
 ├── config/       # Configuration files
 ├── models/       # MongoDB schemas
 ├── services/     # Business logic
-└── utils/        # Helper functions
 ```
 
 ## Features

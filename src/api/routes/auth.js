@@ -45,6 +45,9 @@ router.post('/refresh', async (req, res, next) => {
     const tokens = await rotateRefreshToken(refreshToken, fingerprint);
     res.json(tokens);
   } catch (err) {
+    if (err.message && (err.message.includes('Invalid refresh token') || err.message.includes('expired'))) {
+      return res.status(400).json({ message: err.message });
+    }
     next(err);
   }
 });
