@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const LearningCapture = require('../../models/LearningCapture');
 const mongoose = require('mongoose');
+const { heavyLimiter } = require('../../middleware/rateLimiter');
 
 /**
  * Middleware for async route handlers
@@ -104,8 +105,9 @@ router.get('/', asyncHandler(async (req, res) => {
 
 /**
  * GET /captures/stats - Get analytics and statistics
+ * Rate limited due to heavy aggregation queries
  */
-router.get('/stats', asyncHandler(async (req, res) => {
+router.get('/stats', heavyLimiter, asyncHandler(async (req, res) => {
   const { userId, startDate, endDate } = req.query;
   
   const matchStage = {};
@@ -429,8 +431,9 @@ router.delete('/:id', asyncHandler(async (req, res) => {
 
 /**
  * POST /captures/bulk - Bulk import captures
+ * Rate limited due to potential for large data processing
  */
-router.post('/bulk', asyncHandler(async (req, res) => {
+router.post('/bulk', heavyLimiter, asyncHandler(async (req, res) => {
   const { captures } = req.body;
 
   if (!Array.isArray(captures) || captures.length === 0) {

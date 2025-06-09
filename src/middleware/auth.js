@@ -74,7 +74,7 @@ async function generateTokens(user, fingerprint) {
   const accessToken = jsonwebtoken.sign(
     {
       sub: user.id,
-      fp: fingerprint,
+      fp: typeof fingerprint === 'object' ? fingerprint.hash : fingerprint,
     },
     privateKey,
     {
@@ -90,7 +90,7 @@ async function generateTokens(user, fingerprint) {
   const refreshToken = new RefreshToken({
     user: user.id,
     tokenHash: hashToken(rawRefresh),
-    device: fingerprint,
+    device: typeof fingerprint === 'object' ? fingerprint.hash : fingerprint,
     expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000, // 30 days
   });
   await refreshToken.save();
@@ -110,7 +110,8 @@ async function rotateRefreshToken(rawRefreshToken, fingerprint) {
   const tokenHash = hashToken(rawRefreshToken);
   const existing = await RefreshToken.findOne({ tokenHash });
 
-  if (!existing || existing.consumed || existing.device !== fingerprint) {
+  const deviceHash = typeof fingerprint === 'object' ? fingerprint.hash : fingerprint;
+  if (!existing || existing.consumed || existing.device !== deviceHash) {
     throw new Error("Invalid refresh token");
   }
   if (existing.expiresAt < Date.now()) {
@@ -140,7 +141,7 @@ const checkJwt = jwtMiddleware({
   audience: AUDIENCE,
   issuer: ISSUER,
   algorithms: ["RS256"],
-}).unless({ path: [/\/auth\/login$/, /\/auth\/refresh$/] });
+}).unless({ path: [/\/auth\/login$/, /\/auth\/refresh$/, /\/auth\/logout$/] });
 
 /**
  * Token-binding middleware. Ensures the `fp` claim inside the access token
@@ -150,7 +151,9 @@ const checkJwt = jwtMiddleware({
 function enforceTokenBinding(req, res, next) {
   try {
     const tokenFp = req.user?.fp;
-    const deviceFp = req.fingerprint;
+    const deviceFp = req.fingerprint ? 
+      (typeof req.fingerprint === 'object' ? req.fingerprint.hash : req.fingerprint) : 
+      null;
     if (tokenFp && deviceFp && tokenFp !== deviceFp) {
       return res.status(401).json({ message: "Token binding mismatch" });
     }

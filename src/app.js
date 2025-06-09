@@ -86,25 +86,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const strictLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  skipSuccessfulRequests: true,
-});
-
-app.use('/api/', limiter);
-app.use('/api/auth/', strictLimiter);
-
-// Body parsing middleware
+// Body parsing middleware (needed for fingerprinting)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -125,6 +107,13 @@ app.use(fingerprint());
 // JWT auth & token binding applied globally to API routes (excluded paths configured in middleware)
 app.use(checkJwt);
 app.use(enforceTokenBinding);
+
+// Rate limiting with user awareness (AFTER auth so we know the user)
+const { apiLimiter, authLimiter, rateLimitInfo } = require('./middleware/rateLimiter');
+app.use('/api/', apiLimiter);
+app.use('/api/', rateLimitInfo);
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/refresh', authLimiter);
 
 // Request logging
 if (process.env.NODE_ENV === 'development') {
@@ -183,6 +172,7 @@ app.get('/api/v1', (req, res) => {
 // Mount API routes
 app.use('/api/v1/captures', require('./api/routes/captures'));
 app.use('/api/v1/auth', require('./api/routes/auth'));
+app.use('/api/v1/users', require('./api/routes/users'));
 
 // 404 handler
 app.use((req, res) => {
