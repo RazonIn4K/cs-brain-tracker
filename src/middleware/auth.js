@@ -141,7 +141,22 @@ const checkJwt = jwtMiddleware({
   audience: AUDIENCE,
   issuer: ISSUER,
   algorithms: ["RS256"],
-}).unless({ path: [/\/auth\/login$/, /\/auth\/refresh$/, /\/auth\/logout$/] });
+}).unless({ 
+  path: [
+    // Auth endpoints
+    /\/auth\/login$/,
+    /\/auth\/refresh$/,
+    /\/auth\/logout$/,
+    // OAuth endpoints
+    /\/auth\/google/,
+    /\/auth\/github/,
+    /\/auth\/discord/,
+    // Health check
+    /\/health$/,
+    // Static files (not under /api)
+    /^(?!\/api)/
+  ] 
+});
 
 /**
  * Token-binding middleware. Ensures the `fp` claim inside the access token

@@ -19,8 +19,19 @@ const UserSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: function() {
+        return this.provider === 'local';
+      },
       select: false,
+    },
+    provider: {
+      type: String,
+      enum: ['local', 'google', 'github', 'discord'],
+      default: 'local'
+    },
+    providerId: {
+      type: String,
+      sparse: true
     },
     name: {
       type: String,
@@ -35,8 +46,7 @@ const UserSchema = new mongoose.Schema(
         maxlength: 500
       },
       avatar: {
-        type: String,
-        match: [/^https?:\/\/.+/, 'Avatar must be a valid URL']
+        type: String
       },
       timezone: {
         type: String,

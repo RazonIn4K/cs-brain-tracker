@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const passport = require('passport');
 const { generateTokens, rotateRefreshToken } = require('../../middleware/auth');
 const RefreshToken = require('../../models/refreshToken');
 const User = require('../../models/User');
@@ -83,25 +84,6 @@ router.post('/refresh', async (req, res, next) => {
 /**
  * POST /api/v1/auth/logout
  * body: { refreshToken }
- * Invalidates the given refresh token.
- */
-router.post('/logout', async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-      return res.status(400).json({ message: 'refreshToken required' });
-    }
-    const tokenHash = require('crypto').createHash('sha256').update(refreshToken).digest('hex');
-    await RefreshToken.findOneAndUpdate({ tokenHash }, { consumed: true });
-    res.json({ message: 'Logged out' });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * POST /api/v1/auth/logout
- * body: { refreshToken }
  * Invalidates the refresh token
  */
 router.post('/logout', async (req, res, next) => {
@@ -114,7 +96,6 @@ router.post('/logout', async (req, res, next) => {
       });
     }
     
-    const RefreshToken = require('../../models/refreshToken');
     const crypto = require('crypto');
     
     // Hash the token to find it in database
@@ -148,5 +129,100 @@ router.get('/me', async (req, res) => {
   }
   res.json({ userId: req.user.sub, fingerprint: req.user.fp });
 });
+
+// OAuth Routes
+// Google OAuth
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login', session: false }),
+  async (req, res) => {
+    try {
+      const fingerprint = req.fingerprint || 'oauth-' + Date.now();
+      const tokens = await generateTokens({ id: req.user._id.toString() }, fingerprint);
+      
+      // Set cookies and redirect
+      res.cookie('accessToken', tokens.accessToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000 // 15 minutes
+      });
+      res.cookie('refreshToken', tokens.refreshToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+      
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/login?error=oauth_failed');
+    }
+  }
+);
+
+// GitHub OAuth
+router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+router.get('/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login', session: false }),
+  async (req, res) => {
+    try {
+      const fingerprint = req.fingerprint || 'oauth-' + Date.now();
+      const tokens = await generateTokens({ id: req.user._id.toString() }, fingerprint);
+      
+      res.cookie('accessToken', tokens.accessToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000
+      });
+      res.cookie('refreshToken', tokens.refreshToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/login?error=oauth_failed');
+    }
+  }
+);
+
+// Discord OAuth
+router.get('/discord', passport.authenticate('discord'));
+
+router.get('/discord/callback',
+  passport.authenticate('discord', { failureRedirect: '/login', session: false }),
+  async (req, res) => {
+    try {
+      const fingerprint = req.fingerprint || 'oauth-' + Date.now();
+      const tokens = await generateTokens({ id: req.user._id.toString() }, fingerprint);
+      
+      res.cookie('accessToken', tokens.accessToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000
+      });
+      res.cookie('refreshToken', tokens.refreshToken, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+      
+      res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      res.redirect('/login?error=oauth_failed');
+    }
+  }
+);
 
 module.exports = router; 

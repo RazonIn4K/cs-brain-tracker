@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test - CS Brain Tracker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .oauth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .oauth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .google {
+            background: #4285f4;
+            color: white;
+        }
+        .github {
+            background: #24292e;
+            color: white;
+        }
+        .discord {
+            background: #5865F2;
+            color: white;
+        }
+        .status {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 OAuth Test Page</h1>
+        <p style="text-align: center; color: #666;">Test OAuth authentication with different providers</p>
+        
+        <div class="oauth-buttons">
+            <a href="http://localhost:3001/api/v1/auth/google" class="oauth-btn google">
+                <span>🔍 Sign in with Google</span>
+            </a>
+            
+            <a href="http://localhost:3001/api/v1/auth/github" class="oauth-btn github">
+                <span>🐙 Sign in with GitHub</span>
+            </a>
+            
+            <a href="http://localhost:3001/api/v1/auth/discord" class="oauth-btn discord">
+                <span>💬 Sign in with Discord</span>
+            </a>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="info">
+            <strong>🔧 Test Instructions:</strong>
+            <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Click any OAuth provider button above</li>
+                <li>Complete the authentication flow</li>
+                <li>You'll be redirected back here with auth cookies set</li>
+                <li>Check browser DevTools > Application > Cookies to verify tokens</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Check for OAuth error in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const status = document.getElementById('status');
+        
+        if (error) {
+            status.className = 'status error';
+            status.textContent = `❌ OAuth failed: ${error}`;
+            status.style.display = 'block';
+        }
+        
+        // Check for auth cookies
+        if (document.cookie.includes('accessToken') && document.cookie.includes('refreshToken')) {
+            status.className = 'status success';
+            status.textContent = '✅ Authentication successful! Tokens are set in cookies.';
+            status.style.display = 'block';
+            
+            // Test /me endpoint
+            fetch('http://localhost:3001/api/v1/auth/me', {
+                credentials: 'include'
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('User data:', data);
+                if (data.userId) {
+                    status.textContent += ` User ID: ${data.userId}`;
+                }
+            })
+            .catch(err => console.error('Me endpoint error:', err));
+        }
+    </script>
+</body>
+</html>

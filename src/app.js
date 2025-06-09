@@ -7,7 +7,9 @@ const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
 const Sentry = require('@sentry/node');
 const fingerprint = require('express-fingerprint');
+const passport = require('passport');
 const { checkJwt, enforceTokenBinding } = require('./middleware/auth');
+const { configureOAuth } = require('./services/oauth.service');
 // ProfilingIntegration is optional and may not be available in all versions
 let ProfilingIntegration;
 try {
@@ -104,6 +106,10 @@ app.use(compression());
 // Device fingerprinting (must come before auth middleware)
 app.use(fingerprint());
 
+// Initialize Passport and OAuth strategies
+app.use(passport.initialize());
+configureOAuth();
+
 // JWT auth & token binding applied globally to API routes (excluded paths configured in middleware)
 app.use(checkJwt);
 app.use(enforceTokenBinding);
@@ -122,6 +128,9 @@ if (process.env.NODE_ENV === 'development') {
   // Custom production logging format
   app.use(morgan(':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] :response-time ms'));
 }
+
+// Serve static files from public directory
+app.use(express.static('public'));
 
 // Request ID middleware for tracing
 app.use((req, res, next) => {
@@ -169,8 +178,16 @@ app.get('/api/v1', (req, res) => {
   });
 });
 
-// Mount API routes
-app.use('/api/v1/captures', require('./api/routes/captures'));
+// Personal API routes (no complex auth needed)
+const { authenticatePersonal } = require('./middleware/personalAuth');
+app.use('/api/personal', authenticatePersonal, require('./api/routes/personal'));
+
+// Export/Import routes
+app.use('/api/export', authenticatePersonal, require('./api/routes/export-import'));
+app.use('/api/import', authenticatePersonal, require('./api/routes/export-import'));
+
+// Mount API routes (keeping for compatibility but now require personal auth)
+app.use('/api/v1/captures', authenticatePersonal, require('./api/routes/captures'));
 app.use('/api/v1/auth', require('./api/routes/auth'));
 app.use('/api/v1/users', require('./api/routes/users'));
 
